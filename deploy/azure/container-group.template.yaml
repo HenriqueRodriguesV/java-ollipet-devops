@@ -1,0 +1,70 @@
+# Template do Azure Container Instances (container group) com App + Banco no
+# MESMO grupo: os dois containers dividem a mesma rede (localhost), entao o
+# Postgres nunca precisa ficar exposto na internet - so a porta 8080 do app e
+# publica. Placeholders (${VAR}) sao preenchidos pelo script 05 via envsubst,
+# a partir de variaveis de ambiente - nenhum segredo fica hardcoded aqui.
+apiVersion: "2021-09-01"
+location: ${LOCATION}
+name: ${CONTAINER_GROUP}
+type: Microsoft.ContainerInstance/containerGroups
+properties:
+  osType: Linux
+  restartPolicy: OnFailure
+  imageRegistryCredentials:
+    - server: ${ACR_LOGIN_SERVER}
+      username: ${ACR_USERNAME}
+      password: ${ACR_PASSWORD}
+  ipAddress:
+    type: Public
+    dnsNameLabel: ${DNS_LABEL}
+    ports:
+      - protocol: tcp
+        port: 8080
+  volumes:
+    - name: pgdata
+      azureFile:
+        shareName: ${FILESHARE_NAME}
+        storageAccountName: ${STORAGE_ACCOUNT}
+        storageAccountKey: ${STORAGE_KEY}
+  containers:
+    - name: db
+      properties:
+        image: postgres:16-alpine
+        resources:
+          requests:
+            cpu: 1
+            memoryInGb: 1.5
+        environmentVariables:
+          - name: POSTGRES_DB
+            value: ${DB_NAME}
+          - name: POSTGRES_USER
+            value: ${DB_USER}
+          - name: POSTGRES_PASSWORD
+            secureValue: ${DB_PASSWORD}
+          - name: PGDATA
+            value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+          - name: pgdata
+            mountPath: /var/lib/postgresql/data
+    - name: app
+      properties:
+        image: ${ACR_LOGIN_SERVER}/${APP_IMAGE}:${APP_IMAGE_TAG}
+        resources:
+          requests:
+            cpu: 1
+            memoryInGb: 1.5
+        ports:
+          - port: 8080
+        environmentVariables:
+          - name: PORT
+            value: "8080"
+          - name: DATABASE_URL
+            value: "jdbc:postgresql://localhost:5432/${DB_NAME}"
+          - name: DB_USER
+            value: ${DB_USER}
+          - name: DB_PASSWORD
+            secureValue: ${DB_PASSWORD}
+          - name: APP_SECURITY_JWT_SECRET
+            secureValue: ${APP_SECURITY_JWT_SECRET}
+          - name: FIREBASE_PROJECT_ID
+            value: "${FIREBASE_PROJECT_ID}"
