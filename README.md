@@ -490,8 +490,18 @@ Internet ──▶ [ACI: ollipet-aci]
                 ├─ container "app"  (imagem do ACR, porta 8080 pública)
                 │     └─ DATABASE_URL=jdbc:postgresql://localhost:5432/ollipet
                 └─ container "db"   (postgres:16-alpine, sem porta pública)
-                      └─ volume Azure File Share (dados persistem entre restarts)
+                      └─ disco efêmero do próprio container
 ```
+
+> **Sobre persistência:** o Postgres roda no disco efêmero do container (sem
+> volume externo). Testamos usar Azure File Share (SMB) para persistir os
+> dados, mas o Postgres trava no `initdb` sobre esse tipo de armazenamento —
+> é uma limitação conhecida (Postgres não suporta bem filesystems de rede
+> para o diretório de dados, por causa de locking/fsync). Os dados sobrevivem
+> a reinícios da própria aplicação (container "app"), mas se perdem se o
+> container "db" for recriado — aceitável para esta entrega, já que o
+> requisito é "banco em container na nuvem", não persistência entre
+> recriações do container.
 
 ### Passo a passo (scripts em `deploy/azure/`)
 
@@ -505,21 +515,26 @@ cp deploy/azure/.env.azure.example deploy/azure/.env.azure
 # 2. Resource Group + Azure Container Registry
 ./deploy/azure/01-criar-grupo-e-acr.sh
 
-# 3. Build da imagem da API DENTRO do Azure (az acr build) e push automático
+# 3. Build local da imagem da API e push para o ACR (docker build/login/push -
+#    "az acr build" nao esta disponivel em subscriptions Azure for Students)
 ./deploy/azure/02-build-e-push-imagem.sh
 
-# 4. Storage Account + Azure File Share (persistência do Postgres)
-./deploy/azure/03-criar-storage.sh
+# 3b. Espelha postgres:16-alpine para o ACR (evita rate-limit do Docker Hub no ACI)
+./deploy/azure/02b-espelhar-postgres.sh
 
-# 5. Sobe o container group (App + Banco) no ACI
-./deploy/azure/05-criar-container-group.sh
+# 4. Sobe o container group (App + Banco) no ACI
+./deploy/azure/04-criar-container-group.sh
 
-# 6. Smoke test do CRUD contra o ambiente publicado
-./deploy/azure/06-testar.sh
+# 5. Smoke test do CRUD contra o ambiente publicado
+./deploy/azure/05-testar.sh
 ```
 
-Ao final do passo 5 a API fica pública em:
-`http://ollipet-<RM>.eastus2.azurecontainer.io:8080/swagger-ui.html`
+Ao final do passo 4 a API fica pública em:
+`http://ollipet-<RM>.eastus.azurecontainer.io:8080/swagger-ui.html`
+
+> As imagens Docker precisam ser `linux/amd64` (o ACI não roda ARM64). Em Mac
+> Apple Silicon, use `docker buildx build --platform linux/amd64 ...` — ver
+> comentários nos próprios scripts.
 
 Para remover tudo depois da correção/apresentação (evita gastar crédito Azure):
 
@@ -529,10 +544,10 @@ Para remover tudo depois da correção/apresentação (evita gastar crédito Azu
 
 ### Requisitos atendidos por esta opção
 
-- Todos os recursos (Resource Group, ACR, Storage, ACI) criados via **Azure CLI**.
+- Todos os recursos (Resource Group, ACR, ACI) criados via **Azure CLI**.
 - Container da aplicação roda com **usuário não-root** dedicado (ver `Dockerfile`).
-- Banco de dados **containerizado** (não é H2, não é PaaS) — Postgres 16 com
-  volume persistente em Azure File Share.
+- Banco de dados **containerizado** (não é H2, não é PaaS) — Postgres 16 no
+  mesmo container group da aplicação.
 - Credenciais (senha do banco, chave JWT, senha do ACR) são passadas por
   **variável de ambiente** injetada em tempo de deploy (`deploy/azure/.env.azure`,
   fora do Git) — nada de segredo commitado no código-fonte.

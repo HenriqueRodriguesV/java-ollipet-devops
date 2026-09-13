@@ -7,7 +7,9 @@
 
 export RM="rm562917"
 export TURMA="2tdsa"
-export LOCATION="eastus2"
+# eastus2 nao esta liberada nesta subscription (Azure for Students) por
+# politica de regiao; eastus foi a regiao que a Azure aceitou.
+export LOCATION="eastus"
 
 export RESOURCE_GROUP="rg-${RM}-devops"
 export ACR_NAME="${TURMA}${RM}"                 # nome do Azure Container Registry (globalmente unico)

@@ -5,14 +5,8 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 source ./00-variaveis.sh
 
-if [ -f .storage-key.local ]; then
-    # shellcheck disable=SC1091
-    source .storage-key.local
-fi
-
 : "${DB_PASSWORD:?defina em deploy/azure/.env.azure}"
 : "${APP_SECURITY_JWT_SECRET:?defina em deploy/azure/.env.azure}"
-: "${STORAGE_KEY:?rode 03-criar-storage.sh antes}"
 
 export ACR_LOGIN_SERVER
 ACR_LOGIN_SERVER=$(az acr show --name "${ACR_NAME}" --query loginServer -o tsv)
