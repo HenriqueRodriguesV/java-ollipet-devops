@@ -11,6 +11,8 @@ Toda a superficie publica esta em `/api/v1/**`.
 
 **Repositório de Mobile (frontend):** _([repositório](https://github.com/FIAP-MOBILE/clyvo-challenge-ollipet.git))_
 
+**Vídeo de apresentação (DevOps Tools & Cloud Computing - Sprint 3):** _([disponível no YouTube](https://youtu.be/UABlprwv5OU))_
+
 ---
 
 ## Descrição da solução
