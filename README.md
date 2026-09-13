@@ -36,21 +36,23 @@ PostgreSQL, versionada por Flyway.
 
 ## Benefícios para o negócio
 
-- **Menos falha humana na agenda:** a política de agendamento recusa horário
-  duplicado e cancelamento fora do prazo automaticamente — hoje isso depende
-  de alguém da recepção lembrar de conferir.
-- **Triagem consistente 24h:** qualquer tutor recebe uma classificação de
-  urgência padronizada a qualquer hora, sem esperar alguém da clínica
-  responder no WhatsApp — casos de emergência são sinalizados na hora.
-- **Menos vacina atrasada:** o cálculo automático da próxima dose e a lista de
-  pendências dão à clínica uma visão pró-ativa de quem está devendo vacina,
-  em vez de descobrir isso só quando o tutor aparece.
-- **Adesão a tratamento mensurável:** em vez de "o tutor disse que deu o
-  remédio", o veterinário enxerga percentual real de doses confirmadas por
-  tratamento — decisão clínica melhor no retorno.
-- **Rastreabilidade clínica:** todo atendimento gera prontuário vinculado à
-  consulta e ao profissional que assinou, mesmo que esse profissional saia
-  da clínica depois (o cadastro é desativado, nunca apagado).
+Hoje a agenda depende de alguém da recepção lembrar de conferir choque de
+horário ou cancelamento fora do prazo; a API recusa isso sozinha. A triagem
+também deixa de depender de alguém da clínica estar disponível no WhatsApp —
+o tutor recebe uma classificação de urgência padronizada a qualquer hora, e
+um caso de emergência é sinalizado na hora, não quando alguém ler a mensagem.
+
+No lado da vacinação, o cálculo automático da próxima dose e a lista de
+pendências dão pra clínica uma visão de quem está devendo vacina antes do
+tutor aparecer, em vez de descobrir isso na consulta. E no tratamento em
+casa, o veterinário para de depender do relato do tutor ("disse que deu o
+remédio") e passa a ver um percentual real de doses confirmadas — informação
+melhor pra decidir algo no retorno.
+
+Por fim, cada atendimento gera prontuário vinculado à consulta e ao
+profissional que assinou, mesmo que esse profissional saia da clínica depois
+(o cadastro é desativado, nunca apagado) — então o histórico clínico não se
+perde por causa de troca de equipe.
 
 ---
 
