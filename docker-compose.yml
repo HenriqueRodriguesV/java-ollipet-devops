@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ollipet-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-ollipet}
+      POSTGRES_USER: ${DB_USER:-ollipet}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ollipet}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ollipet-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-ollipet} -d ${DB_NAME:-ollipet}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    container_name: ollipet-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 8080
+      DATABASE_URL: jdbc:postgresql://db:5432/${DB_NAME:-ollipet}
+      DB_USER: ${DB_USER:-ollipet}
+      DB_PASSWORD: ${DB_PASSWORD:-ollipet}
+      APP_SECURITY_JWT_SECRET: ${APP_SECURITY_JWT_SECRET:-clyvo-ollipet-chave-de-desenvolvimento-com-256-bits-minimo}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-}
+    ports:
+      - "${HOST_PORT:-8080}:8080"
+
+volumes:
+  ollipet-db-data:
